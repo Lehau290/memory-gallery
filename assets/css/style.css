@@ -1,0 +1,150 @@
+/* MEMORY GALLERY - Custom Styles & Glassmorphism */
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-serif: 'Playfair Display', Georgia, serif;
+    
+    /* Warm Nostalgic Palette (Light) */
+    --bg-cream: #FAF8F5;
+    --bg-surface: #FFFFFF;
+    --bg-glass: rgba(255, 255, 255, 0.75);
+    --border-subtle: rgba(228, 222, 212, 0.7);
+    --text-primary: #1C1917;
+    --text-secondary: #78716C;
+    --accent-purple: #8B5CF6;
+    --accent-pastel: #DDD6FE;
+    --accent-warm: #F59E0B;
+}
+
+.dark {
+    --bg-cream: #0F0F12;
+    --bg-surface: #18181C;
+    --bg-glass: rgba(24, 24, 28, 0.8);
+    --border-subtle: rgba(45, 45, 55, 0.8);
+    --text-primary: #F5F5F7;
+    --text-secondary: #A1A1AA;
+    --accent-purple: #A78BFA;
+    --accent-pastel: #312E81;
+    --accent-warm: #FBBF24;
+}
+
+body {
+    font-family: var(--font-sans);
+    background-color: var(--bg-cream);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.font-serif {
+    font-family: var(--font-serif);
+}
+
+/* Glassmorphism Classes */
+.glass {
+    background: var(--bg-glass);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border-subtle);
+}
+
+.glass-dropdown {
+    background: var(--bg-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border-subtle);
+    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.12);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(150, 150, 150, 0.25);
+    border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(150, 150, 150, 0.45);
+}
+
+/* Masonry Columns */
+.masonry-grid {
+    column-count: 1;
+    column-gap: 1.25rem;
+}
+@media (min-width: 640px) {
+    .masonry-grid {
+        column-count: 2;
+    }
+}
+@media (min-width: 1024px) {
+    .masonry-grid {
+        column-count: 3;
+    }
+}
+@media (min-width: 1440px) {
+    .masonry-grid {
+        column-count: 4;
+    }
+}
+
+.masonry-item {
+    break-inside: avoid;
+    margin-bottom: 1.25rem;
+    transform: translateZ(0);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.masonry-item:hover {
+    transform: translateY(-3px);
+}
+
+/* Soft Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes pulseGlow {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 0.9; }
+}
+
+.pulse-glow {
+    animation: pulseGlow 3s infinite ease-in-out;
+}
+
+/* Timeline Vertical Line */
+.timeline-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 20px;
+    width: 2px;
+    background: linear-gradient(180deg, #8B5CF6 0%, rgba(139, 92, 246, 0.1) 100%);
+}
+
+@media (min-width: 768px) {
+    .timeline-line {
+        left: 50%;
+        transform: translateX(-50%);
+    }
+}
+
+/* Image zoom in modal */
+.lightbox-img {
+    transition: transform 0.2s cubic-bezier(0.2, 0, 0.2, 1);
+    max-height: 85vh;
+}
+

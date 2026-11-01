@@ -1725,13 +1725,45 @@ const App = {
         if (!file) return;
         const target = document.getElementById('profile-avatar-preview');
         if (target) target.src = URL.createObjectURL(file);
+        this.toast('Đã chọn ảnh mới. Nhấn "Lưu thay đổi" để áp dụng ảnh đại diện!', 'info');
     },
 
     async handleProfileUpdate(e) {
         e.preventDefault();
         const form = e.target;
-        const formData = new FormData(form);
+        const avatarFileInput = form.querySelector('input[name="avatar_file"]');
+        const file = avatarFileInput ? avatarFileInput.files[0] : null;
 
+        // If running on static hosting (GitHub Pages) or file upload without server
+        if (file && (window.MockEngine && window.MockEngine.isStaticHost || !window.location.port)) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const base64Url = event.target.result;
+                const fullName = form.full_name.value.trim() || this.user.full_name;
+                const bio = form.bio.value.trim();
+
+                this.user.avatar_url = base64Url;
+                this.user.full_name = fullName;
+                this.user.bio = bio;
+
+                // Persist into localStorage for GitHub Pages
+                const users = JSON.parse(localStorage.getItem('mg_users') || '[]');
+                const idx = users.findIndex(u => String(u.id) === String(this.user.id));
+                if (idx !== -1) {
+                    users[idx].avatar_url = base64Url;
+                    users[idx].full_name = fullName;
+                    users[idx].bio = bio;
+                    localStorage.setItem('mg_users', JSON.stringify(users));
+                }
+
+                this.toast('Cập nhật ảnh đại diện và hồ sơ thành công!', 'success');
+                this.renderUserUI();
+            };
+            reader.readAsDataURL(file);
+            return;
+        }
+
+        const formData = new FormData(form);
         try {
             const res = await fetch('api/auth/update_profile', {
                 method: 'POST',

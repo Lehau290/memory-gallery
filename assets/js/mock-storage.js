@@ -118,6 +118,14 @@
                 return { ok: true, status: 200, json: async () => ({ message: 'Đã đăng xuất' }) };
             }
 
+            // Auth Update Profile
+            if (cleanUrl.endsWith('api/auth/update_profile')) {
+                const token = localStorage.getItem('mg_token');
+                const users = getStored('mg_users');
+                const user = users.find(u => String(u.id) === String(token)) || users[0];
+                return { ok: true, status: 200, json: async () => ({ message: 'Cập nhật thành công', user }) };
+            }
+
             // Stats
             if (cleanUrl.endsWith('api/stats')) {
                 const memories = getStored('mg_memories');

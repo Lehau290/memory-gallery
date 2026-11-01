@@ -2,9 +2,15 @@
  * MEMORY GALLERY - Core Single Page Application Logic
  */
 
-// Global transparent Fetch wrapper to inject JWT Auth Bearer token
+// Global transparent Fetch wrapper to inject JWT Auth Bearer token & handle GitHub Pages static fallback
 const _nativeFetch = window.fetch;
-window.fetch = function(url, options = {}) {
+window.fetch = async function(url, options = {}) {
+    if (window.MockEngine && (window.MockEngine.isStaticHost || (typeof url === 'string' && url.includes('api/')))) {
+        if (window.MockEngine.isStaticHost) {
+            const mockRes = window.MockEngine.handleRequest(url, options);
+            if (mockRes) return mockRes;
+        }
+    }
     options = options || {};
     options.headers = options.headers || {};
     const token = localStorage.getItem('mg_token');
@@ -17,7 +23,20 @@ window.fetch = function(url, options = {}) {
             options.headers['Authorization'] = 'Bearer ' + token;
         }
     }
-    return _nativeFetch(url, options);
+    try {
+        const response = await _nativeFetch(url, options);
+        if (!response.ok && response.status === 404 && window.MockEngine) {
+            const mockRes = window.MockEngine.handleRequest(url, options);
+            if (mockRes) return mockRes;
+        }
+        return response;
+    } catch (err) {
+        if (window.MockEngine) {
+            const mockRes = window.MockEngine.handleRequest(url, options);
+            if (mockRes) return mockRes;
+        }
+        throw err;
+    }
 };
 
 const App = {

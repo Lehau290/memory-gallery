@@ -40,6 +40,56 @@ window.fetch = async function(url, options = {}) {
 };
 
 const App = {
+    // Animation Utilities
+    animateCounter(elId, start, end, duration = 800) {
+        const el = document.getElementById(elId);
+        if (!el || isNaN(end)) return;
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            const easeOutQuad = 1 - (1 - progress) * (1 - progress);
+            const current = Math.floor(easeOutQuad * (end - start) + start);
+            el.textContent = current;
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            } else {
+                el.textContent = end;
+            }
+        };
+        window.requestAnimationFrame(step);
+    },
+
+    spawnHeartParticles(btn) {
+        if (!btn) return;
+        btn.classList.add('animate-heart-pop');
+        setTimeout(() => btn.classList.remove('animate-heart-pop'), 450);
+
+        const rect = btn.getBoundingClientRect();
+        const colors = ['#F43F5E', '#EC4899', '#A855F7', '#F59E0B', '#3B82F6', '#10B981'];
+        for (let i = 0; i < 7; i++) {
+            const p = document.createElement('span');
+            p.className = 'particle';
+            const size = Math.floor(Math.random() * 4) + 4;
+            p.style.width = size + 'px';
+            p.style.height = size + 'px';
+            p.style.backgroundColor = colors[i % colors.length];
+            p.style.left = (rect.left + rect.width / 2) + 'px';
+            p.style.top = (rect.top + rect.height / 2) + 'px';
+            p.style.position = 'fixed';
+            
+            const angle = (i / 7) * 2 * Math.PI + (Math.random() * 0.4 - 0.2);
+            const dist = Math.floor(Math.random() * 20) + 24;
+            const tx = Math.cos(angle) * dist;
+            const ty = Math.sin(angle) * dist;
+            p.style.setProperty('--tx', tx + 'px');
+            p.style.setProperty('--ty', ty + 'px');
+
+            document.body.appendChild(p);
+            setTimeout(() => p.remove(), 600);
+        }
+    },
+
     user: null,
     currentRoute: 'dashboard',
     theme: localStorage.getItem('mg_theme') || 'light',
@@ -79,7 +129,13 @@ const App = {
         icons.forEach(el => {
             el.setAttribute('data-lucide', this.theme === 'dark' ? 'sun' : 'moon');
         });
-        if (window.lucide) lucide.createIcons();
+        
+            if (window.lucide) lucide.createIcons();
+            // Animate number counters
+            this.animateCounter('stat-counter-photos', 0, stats.total_photos || 0);
+            this.animateCounter('stat-counter-videos', 0, stats.total_videos || 0);
+            this.animateCounter('stat-counter-albums', 0, stats.total_albums || 0);
+
     },
 
     // Authentication Checks
@@ -402,7 +458,7 @@ const App = {
             container.innerHTML = `
                 <div class="space-y-8 animate-fade-in pb-12">
                     <!-- Top Welcome Banner -->
-                    <div class="relative overflow-hidden rounded-3xl p-8 glass bg-gradient-to-br from-purple-500/10 via-amber-500/5 to-rose-500/10 border border-purple-200/40 dark:border-purple-800/30">
+                    <div class="relative overflow-hidden rounded-3xl p-8 glass aurora-bg border border-purple-200/40 dark:border-purple-800/30 shadow-lg">
                         <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                             <div>
                                 <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 dark:bg-purple-900/60 dark:text-purple-300 mb-3">
@@ -443,7 +499,7 @@ const App = {
                                     <i data-lucide="image" class="w-5 h-5"></i>
                                 </div>
                             </div>
-                            <div class="text-3xl font-bold font-serif text-stone-900 dark:text-white">${stats.total_photos}</div>
+                            <div class="text-3xl font-bold font-serif text-stone-900 dark:text-white" id="stat-counter-photos">${stats.total_photos}</div>
                             <div class="text-xs text-stone-500 dark:text-stone-400 mt-1 flex items-center gap-1">
                                 <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500"></i> Đã lưu trữ an toàn
                             </div>
@@ -456,7 +512,7 @@ const App = {
                                     <i data-lucide="film" class="w-5 h-5"></i>
                                 </div>
                             </div>
-                            <div class="text-3xl font-bold font-serif text-stone-900 dark:text-white">${stats.total_videos}</div>
+                            <div class="text-3xl font-bold font-serif text-stone-900 dark:text-white" id="stat-counter-videos">${stats.total_videos}</div>
                             <div class="text-xs text-stone-500 dark:text-stone-400 mt-1">Hỗ trợ phát trực tiếp HD</div>
                         </div>
 
@@ -467,7 +523,7 @@ const App = {
                                     <i data-lucide="folder-heart" class="w-5 h-5"></i>
                                 </div>
                             </div>
-                            <div class="text-3xl font-bold font-serif text-stone-900 dark:text-white">${stats.total_albums}</div>
+                            <div class="text-3xl font-bold font-serif text-stone-900 dark:text-white" id="stat-counter-albums">${stats.total_albums}</div>
                             <div class="text-xs text-stone-500 dark:text-stone-400 mt-1">Phân loại theo chủ đề</div>
                         </div>
 
@@ -482,7 +538,7 @@ const App = {
                                 ${stats.used_formatted} <span class="text-xs font-normal text-stone-400">/ ${stats.quota_formatted}</span>
                             </div>
                             <div class="w-full bg-stone-200 dark:bg-stone-800 rounded-full h-2 mt-3 overflow-hidden">
-                                <div class="bg-gradient-to-r from-purple-500 to-indigo-600 h-2 rounded-full transition-all" style="width: ${Math.min(100, Math.max(2, stats.used_percent))}%"></div>
+                                <div class="bg-gradient-to-r from-purple-500 to-indigo-600 h-2 rounded-full transition-all shimmer-progress" style="width: ${Math.min(100, Math.max(2, stats.used_percent))}%"></div>
                             </div>
                             <div class="text-[11px] text-stone-500 dark:text-stone-400 mt-1.5 flex justify-between">
                                 <span>Đã dùng ${stats.used_percent}%</span>
@@ -625,7 +681,7 @@ const App = {
                     </div>
 
                     <!-- Batch Floating Toolbar -->
-                    <div id="batch-toolbar" class="hidden glass p-3 rounded-2xl flex items-center justify-between gap-4 border border-purple-300 dark:border-purple-800 bg-purple-50/70 dark:bg-purple-950/40">
+                    <div id="batch-toolbar" class="hidden glass p-3.5 rounded-2xl flex items-center justify-between gap-4 border border-purple-300 dark:border-purple-800 bg-purple-50/80 dark:bg-purple-950/60 shadow-xl batch-floating-toolbar">
                         <div class="flex items-center gap-2 text-xs font-medium text-purple-900 dark:text-purple-200">
                             <span id="batch-count" class="font-bold">0</span> mục đã được chọn
                         </div>
@@ -689,7 +745,7 @@ const App = {
         const isSelected = this.selectedMemoryIds.has(m.id);
 
         return `
-            <div class="masonry-item group relative glass rounded-3xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300" onclick="App.handleCardClick(event, ${index}, ${m.id})">
+            <div class="masonry-item stagger-item group relative glass rounded-3xl overflow-hidden cursor-pointer shadow-sm hover:shadow-2xl transition-all duration-300" style="animation-delay: ${(index % 10) * 0.05}s;" onclick="App.handleCardClick(event, ${index}, ${m.id})">
                 <!-- Checkbox for Batch Mode -->
                 <div class="batch-checkbox-wrap absolute top-3 left-3 z-20 ${this.batchMode ? '' : 'hidden'}">
                     <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="App.toggleSelectMemory(${m.id}, this.checked)" class="w-5 h-5 accent-purple-600 rounded cursor-pointer shadow-md">
@@ -715,7 +771,7 @@ const App = {
 
                     <!-- Hover Quick Actions (Top Right) -->
                     <div class="absolute top-3 right-3 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
-                        <button onclick="event.stopPropagation(); App.toggleFavorite(${m.id})" class="p-2 rounded-full backdrop-blur-md ${isFav ? 'bg-rose-500 text-white' : 'bg-black/40 text-white hover:bg-black/60'} transition shadow-sm">
+                        <button onclick="App.toggleFavorite(${m.id}, event)" class="p-2 rounded-full backdrop-blur-md ${isFav ? 'bg-rose-500 text-white' : 'bg-black/40 text-white hover:bg-black/60'} transition shadow-sm">
                             <i data-lucide="heart" class="w-4 h-4 ${isFav ? 'fill-current' : ''}"></i>
                         </button>
                         <a href="api/download?id=${m.id}" onclick="event.stopPropagation()" class="p-2 rounded-full bg-black/40 text-white hover:bg-black/60 backdrop-blur-md transition shadow-sm">
@@ -830,7 +886,8 @@ const App = {
         this.toast('Đang tạo tệp nén Zip để tải xuống...', 'info');
     },
 
-    async toggleFavorite(id) {
+    async toggleFavorite(id, event) {
+        if (event) { event.stopPropagation(); this.spawnHeartParticles(event.currentTarget); }
         try {
             const res = await fetch('api/memories/toggle_favorite', {
                 method: 'POST',
@@ -1059,7 +1116,7 @@ const App = {
                     ${albums.length > 0 ? `
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                             ${albums.map(alb => `
-                                <div onclick="App.navigate('album-detail:${alb.id}')" class="group glass rounded-3xl overflow-hidden cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                                <div onclick="App.navigate('album-detail:${alb.id}')" class="group glass album-stack rounded-3xl overflow-hidden cursor-pointer hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1.5 stagger-item" style="animation-delay: ${(idx % 8) * 0.06}s;">
                                     <div class="relative h-48 overflow-hidden bg-stone-100 dark:bg-stone-900">
                                         <img src="${alb.cover_url}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="${alb.title}">
                                         <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
@@ -1239,7 +1296,7 @@ const App = {
                                         ${yearGroup.months.map(mGroup => `
                                             <div class="relative space-y-4">
                                                 <div class="flex items-center gap-2">
-                                                    <span class="w-3 h-3 rounded-full bg-purple-600 border-2 border-white dark:border-stone-900 -ml-[23px]"></span>
+                                                    <span class="w-3.5 h-3.5 rounded-full bg-purple-600 border-2 border-white dark:border-stone-900 -ml-[24px] timeline-node-active shadow-md"></span>
                                                     <h3 class="text-base font-bold font-serif text-stone-800 dark:text-stone-200">
                                                         ${mGroup.month_name}
                                                     </h3>
@@ -1325,7 +1382,7 @@ const App = {
                                 Vào ngày này năm trước...
                             </span>
                             <h1 class="text-3xl sm:text-4xl font-bold font-serif text-stone-900 dark:text-white mb-2">
-                                Bạn còn nhớ ngày này không?
+                                Bạn còn nhớ ngày này không? <span class="sparkle-float text-amber-400 inline-block text-2xl ml-1">✨</span>
                             </h1>
                             <p class="text-stone-600 dark:text-stone-300 text-sm leading-relaxed">
                                 Những khoảnh khắc từng trôi qua tưởng chừng như mới hôm qua. Hãy cùng lắng đọng và nhìn lại những nụ cười, những chuyến đi trên cùng một ngày của những năm trước.
@@ -1348,8 +1405,8 @@ const App = {
 
                                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                                         ${g.memories.map(m => `
-                                            <div onclick="App.openSingleMemoryModal(${m.id})" class="glass rounded-3xl overflow-hidden cursor-pointer hover:shadow-xl transition-all group">
-                                                <div class="relative h-56 bg-stone-100 dark:bg-stone-900 overflow-hidden">
+                                            <div onclick="App.openSingleMemoryModal(${m.id})" class="polaroid-card cursor-pointer group stagger-item" style="transform: rotate(${idx % 2 === 0 ? -1.8 : 1.8}deg); animation-delay: ${idx * 0.08}s;">
+                                                <div class="relative h-56 rounded-2xl bg-stone-100 dark:bg-stone-900 overflow-hidden">
                                                     <img src="${m.file_path}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="${m.title}">
                                                     ${m.file_type === 'video' ? `
                                                         <div class="absolute inset-0 flex items-center justify-center">
@@ -1500,7 +1557,7 @@ const App = {
                             <span id="progress-percentage-text">0%</span>
                         </div>
                         <div class="w-full bg-stone-200 dark:bg-stone-800 rounded-full h-2.5 overflow-hidden">
-                            <div id="progress-bar-fill" class="bg-gradient-to-r from-purple-600 to-indigo-600 h-2.5 rounded-full transition-all duration-200" style="width: 0%"></div>
+                            <div id="progress-bar-fill" class="bg-gradient-to-r from-purple-600 to-indigo-600 h-2.5 rounded-full transition-all duration-200 progress-striped" style="width: 0%"></div>
                         </div>
                     </div>
 
@@ -1518,6 +1575,23 @@ const App = {
             </div>
         `;
         if (window.lucide) lucide.createIcons();
+
+        // Wire drag & drop pulse effect
+        const dropZone = document.getElementById('drop-zone');
+        if (dropZone) {
+            ['dragenter', 'dragover'].forEach(evt => {
+                dropZone.addEventListener(evt, (e) => {
+                    e.preventDefault();
+                    dropZone.classList.add('drag-active');
+                });
+            });
+            ['dragleave', 'drop'].forEach(evt => {
+                dropZone.addEventListener(evt, (e) => {
+                    e.preventDefault();
+                    dropZone.classList.remove('drag-active');
+                });
+            });
+        }
     },
 
     uploadQueue: [],
@@ -1650,7 +1724,7 @@ const App = {
                     <form onsubmit="App.handleProfileUpdate(event)" class="space-y-6">
                         <!-- Avatar Section -->
                         <div class="flex items-center gap-6">
-                            <div class="relative w-24 h-24 rounded-full overflow-hidden border-2 border-purple-500 shadow-md">
+                            <div class="relative w-24 h-24 rounded-full avatar-ripple overflow-hidden border-2 border-purple-500 shadow-md">
                                 <img id="profile-avatar-preview" src="${this.user.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&auto=format&fit=crop&q=80'}" class="w-full h-full object-cover">
                             </div>
                             <div>

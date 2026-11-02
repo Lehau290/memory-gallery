@@ -104,6 +104,10 @@ const App = {
     async init() {
         this.applyTheme(this.theme);
         this.bindEvents();
+        // On static hosting (GitHub Pages), default to Demo user if no token set
+        if (!localStorage.getItem('mg_token') && window.MockEngine && window.MockEngine.isStaticHost) {
+            localStorage.setItem('mg_token', '1');
+        }
         await this.checkAuth();
         this.handleRouting();
     },
@@ -129,13 +133,7 @@ const App = {
         icons.forEach(el => {
             el.setAttribute('data-lucide', this.theme === 'dark' ? 'sun' : 'moon');
         });
-        
-            if (window.lucide) lucide.createIcons();
-            // Animate number counters
-            this.animateCounter('stat-counter-photos', 0, stats.total_photos || 0);
-            this.animateCounter('stat-counter-videos', 0, stats.total_videos || 0);
-            this.animateCounter('stat-counter-albums', 0, stats.total_albums || 0);
-
+        if (window.lucide) lucide.createIcons();
     },
 
     // Authentication Checks
@@ -614,6 +612,12 @@ const App = {
                 </div>
             `;
             if (window.lucide) lucide.createIcons();
+            // Animate number counters
+            setTimeout(() => {
+                this.animateCounter('stat-counter-photos', 0, stats.total_photos || 0);
+                this.animateCounter('stat-counter-videos', 0, stats.total_videos || 0);
+                this.animateCounter('stat-counter-albums', 0, stats.total_albums || 0);
+            }, 50);
         } catch (e) {
             console.error(e);
             container.innerHTML = `<div class="p-8 text-rose-500">Lỗi khi tải dữ liệu trang chủ.</div>`;

@@ -86,7 +86,7 @@
         handleRequest(url, options = {}) {
             const method = (options.method || 'GET').toUpperCase();
             const body = options.body ? (typeof options.body === 'string' ? JSON.parse(options.body || '{}') : {}) : {};
-            const cleanUrl = url.split('?')[0].replace(/^\//, '');
+            const cleanUrl = url.split('?')[0].replace(/^(\.\/|\/)/, '');
             const params = new URLSearchParams(url.includes('?') ? url.split('?')[1] : '');
 
             // Auth Me
@@ -133,7 +133,9 @@
                 const photos = memories.filter(m => m.file_type === 'image');
                 const videos = memories.filter(m => m.file_type === 'video');
                 const favs = memories.filter(m => m.is_favorite == 1);
-                const user = getStored('mg_users')[0];
+                const token = localStorage.getItem('mg_token');
+                const users = getStored('mg_users');
+                const user = users.find(u => String(u.id) === String(token)) || users[0];
 
                 return {
                     ok: true, status: 200, json: async () => ({
